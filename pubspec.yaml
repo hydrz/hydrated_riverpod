@@ -1,7 +1,11 @@
 name: hydrated_riverpod
 description: An extension to the riverpod state management library which automatically persists and restores riverpod states.
 version: 0.0.1+1
-publish_to: none
+publish_to: https://pub.dev/
+repository: https://github.com/hydrz/hydrated_riverpod
+issue_tracker: https://github.com/hydrz/hydrated_riverpod
+homepage: https://github.com/hydrz/hydrated_riverpod
+documentation: https://github.com/hydrz/hydrated_riverpod
 
 environment:
   sdk: ">=2.16.0 <3.0.0"
