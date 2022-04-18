@@ -84,9 +84,10 @@ void main() {
         storage = await HydratedStorage.build(
           storageDirectory: storageDirectory,
         );
-        final box = HydratedStorage.hive.box<dynamic>('hydrated_box');
+        final box = HydratedStorage.hive.box<dynamic>('hydrated_riverpod_box');
         expect(box, isNotNull);
-        expect(box.path, p.join(storageDirectory.path, 'hydrated_box.hive'));
+        expect(box.path,
+            p.join(storageDirectory.path, 'hydrated_riverpod_box.hive'));
       });
     });
 

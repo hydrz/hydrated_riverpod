@@ -92,13 +92,13 @@ class HydratedStorage implements Storage {
 
       if (storageDirectory == webStorageDirectory) {
         box = await hive.openBox<dynamic>(
-          'hydrated_box',
+          'hydrated_riverpod_box',
           encryptionCipher: encryptionCipher,
         );
       } else {
         hive.init(storageDirectory.path);
         box = await hive.openBox<dynamic>(
-          'hydrated_box',
+          'hydrated_riverpod_box',
           encryptionCipher: encryptionCipher,
         );
         await _migrate(storageDirectory, box);
