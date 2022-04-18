@@ -37,3 +37,10 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
+
+# Coverage
+coverage/
+coverage_badge.svg
+.test_coverage.dart
+*.lcov
+nohup.out
