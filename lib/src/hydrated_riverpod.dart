@@ -5,9 +5,6 @@ import 'package:meta/meta.dart';
 
 const _asyncRunZoned = runZoned;
 
-/// This class extends [Override] and facilitates overriding
-/// It should be extended by another class in client code with overrides
-/// that construct a custom implementation.
 /// For example:
 ///
 /// ```dart
@@ -18,48 +15,41 @@ const _asyncRunZoned = runZoned;
 /// }
 ///
 /// void main() {
-///   HydratedRiverpodOverride.runZoned(() {
+///   HydratedRiverpod.runZoned(() {
 ///     ...
-///     // HydratedBloc instances will use MyStorage.
+///     // HydratedRiverpod instances will use MyStorage.
 ///     ...
 ///   }, storage: MyStorage());
 /// }
 /// ```
-class HydratedRiverpodOverride extends Override {
+class HydratedRiverpod {
   static final _token = Object();
 
-  /// Returns the current [HydratedRiverpodOverride] instance.
+  /// Returns the current [HydratedRiverpod] instance.
   ///
   /// This will return `null` if the current [Zone] does not contain
-  /// any [HydratedRiverpodOverride].
+  /// any [HydratedRiverpod].
   ///
   /// See also:
-  /// * [HydratedRiverpodOverride.runZoned] to provide [HydratedRiverpodOverride]
+  /// * [HydratedRiverpod.runZoned] to provide [HydratedRiverpod]
   /// in a fresh [Zone].
   ///
-  static HydratedRiverpodOverride? get current {
-    return Zone.current[_token] as HydratedRiverpodOverride?;
+  static HydratedRiverpod? get current {
+    return Zone.current[_token] as HydratedRiverpod?;
   }
 
-  /// Runs [ProviderContainer] in a fresh [Zone] using the provided overrides.
+  /// Runs [body] in a fresh [Zone] using the provided overrides.
   static FutureOr<R> runZoned<R>(
     FutureOr<R> Function() body, {
-    @Deprecated('Use createStorage instead.') Storage? storage,
     FutureOr<Storage> Function()? createStorage,
   }) {
-    assert(
-      storage == null || createStorage == null,
-      'Cannot specify both storage and createStorage',
-    );
-
-    final overrides = _HydratedRiverpodOverrideScope(storage, createStorage);
-
+    final _scope = _HydratedRiverpodScope(createStorage);
     return _asyncRunZoned(
       () async {
-        await overrides._init();
+        await _scope._init();
         return body();
       },
-      zoneValues: {_token: overrides},
+      zoneValues: {_token: _scope},
     );
   }
 
@@ -67,11 +57,10 @@ class HydratedRiverpodOverride extends Override {
   Storage get storage => _defaultStorage;
 }
 
-class _HydratedRiverpodOverrideScope extends HydratedRiverpodOverride {
-  _HydratedRiverpodOverrideScope(this._storage, this.createStorage);
+class _HydratedRiverpodScope extends HydratedRiverpod {
+  _HydratedRiverpodScope(this.createStorage);
 
-  final HydratedRiverpodOverride? _previous = HydratedRiverpodOverride.current;
-  final Storage? _storage;
+  final HydratedRiverpod? _previous = HydratedRiverpod.current;
   final FutureOr<Storage> Function()? createStorage;
   late final Storage? _storageValue;
 
@@ -81,7 +70,7 @@ class _HydratedRiverpodOverrideScope extends HydratedRiverpodOverride {
 
   @override
   Storage get storage {
-    final storage = _storage ?? _storageValue;
+    final storage = _storageValue;
     if (storage != null) return storage;
 
     final previous = _previous;
@@ -91,17 +80,18 @@ class _HydratedRiverpodOverrideScope extends HydratedRiverpodOverride {
   }
 }
 
-/// {@template hydrated_riverpod}
-/// Specialized [StateNotifier] which handles initializing the [StateNotifier]
+/// {@template HydratedStateNotifier}
+/// Specialized [StateNotifier] which handles initializing the [StateNotifier] state
 /// based on the persisted state. This allows state to be persisted
 /// across hot restarts as well as complete app restarts.
 ///
 /// ```dart
-/// class CounterStateNotifier extends HydratedStateNotifier<int> {
-///   CounterStateNotifier() : super(0);
+/// class Counter extends HydratedStateNotifier<int> {
+///   Counter() : super(0);
 ///
-//   void increment() => state++;
-//   void decrement() => state++;
+///   void increment() => state++;
+///
+///   void decrement() => state==;
 ///
 ///   @override
 ///   int fromJson(Map<String, dynamic> json) => json['value'] as int;
@@ -113,25 +103,25 @@ class _HydratedRiverpodOverrideScope extends HydratedRiverpodOverride {
 ///
 /// {@endtemplate}
 abstract class HydratedStateNotifier<State> extends StateNotifier<State>
-    with HydratedMixin {
-  /// {@macro hydrated_riverpod}
-  HydratedStateNotifier(State initialState) : super(initialState) {
+    with HydratedMixin<State> {
+  /// {@macro HydratedStateNotifier}
+  HydratedStateNotifier(State state) : super(state) {
     hydrate();
   }
 }
 
 /// A mixin which enables automatic state persistence
-/// for [StateProvider] and [StateNotifierProvider] classes.
+/// for [StateController] and [StateNotifier] classes.
 ///
 /// The [hydrate] method must be invoked in the constructor body
 /// when using the [HydratedMixin] directly.
 ///
 /// If a mixin is not necessary, it is recommended to
-/// extend [HydratedStateNotifier] respectively.
+/// extend [HydratedStateController] and [HydratedStateNotifier] respectively.
 ///
 /// ```dart
-/// class CounterBloc extends Bloc<CounterEvent, int> with HydratedMixin {
-///  CounterBloc() : super(0) {
+/// class Counter extends StateNotifier<int> with HydratedMixin {
+///  Counter() : super(0) {
 ///    hydrate();
 ///  }
 ///  ...
@@ -140,13 +130,14 @@ abstract class HydratedStateNotifier<State> extends StateNotifier<State>
 ///
 /// See also:
 ///
+/// * [HydratedStateController] to enable automatic state persistence/restoration with [StateController]
 /// * [HydratedStateNotifier] to enable automatic state persistence/restoration with [StateNotifier]
 ///
 mixin HydratedMixin<State> on StateNotifier<State> {
-  late final _overrides = HydratedRiverpodOverride.current;
+  late final _scope = HydratedRiverpod.current;
 
   Storage get _storage {
-    final storage = _overrides?.storage;
+    final storage = _scope?.storage;
     if (storage == null) throw const StorageNotFound();
     if (storage is _DefaultStorage) throw const StorageNotFound();
     return storage;
@@ -171,14 +162,19 @@ mixin HydratedMixin<State> on StateNotifier<State> {
         _storage.write(storageToken, stateJson).then((_) {}, onError: onError);
       }
     } catch (error, stackTrace) {
-      if (onError != null) {
-        onError!(error, stackTrace);
-      } else {
-        Zone.current.handleUncaughtError(error, stackTrace);
-      }
+      onError(error, stackTrace);
       if (error is StorageNotFound) rethrow;
     }
   }
+
+  @override
+  ErrorListener get onError => (Object error, StackTrace? stackTrace) {
+        if (super.onError != null) {
+          super.onError!(error, stackTrace);
+        } else {
+          throw error;
+        }
+      };
 
   State? _state;
 
@@ -199,11 +195,7 @@ mixin HydratedMixin<State> on StateNotifier<State> {
       _state = cachedState;
       return cachedState;
     } catch (error, stackTrace) {
-      if (onError != null) {
-        onError!(error, stackTrace);
-      } else {
-        Zone.current.handleUncaughtError(error, stackTrace);
-      }
+      onError(error, stackTrace);
       _state = super.state;
       return super.state;
     }
@@ -219,11 +211,7 @@ mixin HydratedMixin<State> on StateNotifier<State> {
         _storage.write(storageToken, stateJson).then((_) {}, onError: onError);
       }
     } catch (error, stackTrace) {
-      if (onError != null) {
-        onError!(error, stackTrace);
-      } else {
-        Zone.current.handleUncaughtError(error, stackTrace);
-      }
+      onError(error, stackTrace);
       rethrow;
     }
     _state = state;
@@ -425,7 +413,7 @@ class StorageNotFound implements Exception {
     return 'Storage was accessed before it was initialized.\n'
         'Please ensure that storage has been initialized.\n\n'
         'For example:\n\n'
-        'HydratedBlocOverrides.runZoned(\n'
+        'HydratedRiverpod.runZoned(\n'
         '  () => runApp(MyApp()),\n'
         '  createStorage: () => HydratedStorage.build(...),\n'
         ');';
@@ -439,7 +427,7 @@ class StorageNotFound implements Exception {
 /// method on the object. If that call fails, the error will be stored in the
 /// [cause] field. If the call returns an object that isn't directly
 /// serializable, the [cause] is null.
-class HydratedUnsupportedError extends Error {
+class HydratedUnsupportedError implements Exception {
   /// The object that failed to be serialized.
   /// Error of attempt to serialize through `toJson` method.
   HydratedUnsupportedError(

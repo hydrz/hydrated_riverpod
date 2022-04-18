@@ -1,5 +1,5 @@
 name: hydrated_riverpod
-description: A Very Good Project created by Very Good CLI.
+description: An extension to the riverpod state management library which automatically persists and restores riverpod states.
 version: 1.0.0+1
 publish_to: none
 
@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   hive: ^2.1.0
+  json_serializable: ^6.1.6
   meta: ^1.7.0
   riverpod: ^1.0.3
   synchronized: ^3.0.0+2
@@ -18,4 +19,5 @@ dev_dependencies:
   mocktail: ^0.3.0
   path: ^1.8.0
   test: ^1.19.5
+  uuid: ^3.0.6
   very_good_analysis: ^2.4.0

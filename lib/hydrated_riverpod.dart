@@ -9,4 +9,5 @@ export 'package:riverpod/riverpod.dart';
 
 export 'src/hydrated_cipher.dart';
 export 'src/hydrated_riverpod.dart' hide NIL;
+export 'src/hydrated_state_provider.dart';
 export 'src/hydrated_storage.dart';
