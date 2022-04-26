@@ -18,12 +18,10 @@ Like [`hydrated_bloc`](https://github.com/felangel/bloc/blob/master/packages/hyd
 
 ```dart
 void main() async {
-  HydratedRiverpod.runZoned(
-    () => runApp(ProviderScope(child: MyApp())),
-    createStorage: async () {
-      return HydratedStorage.build(storageDirectory: ...);
-    },
-  );
+  WidgetsFlutterBinding.ensureInitialized();
+  final storage = HydratedStorage.build(storageDirectory: ...)
+  HydratedRiverpod.initialize(storage: storage);
+  runApp(ProviderScope(child: MyApp()));
 }
 ```
 
@@ -106,10 +104,9 @@ class MyHydratedStorage implements Storage {
 ```dart
 // main.dart
 
-HydratedRiverpod.runZoned(
-  () => runApp(ProviderScope(child: MyApp())),
-  createStorage: () => MyHydratedStorage(),
-);
+  HydratedRiverpod.initialize(storage: MyHydratedStorage());
+  runApp(ProviderScope(child: MyApp()));
+
 ```
 
 ## Dart Versions
