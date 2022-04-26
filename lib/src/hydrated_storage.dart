@@ -52,7 +52,7 @@ class HydratedStorage implements Storage {
   /// import 'package:flutter/foundation.dart';
   /// import 'package:flutter/material.dart';
   ///
-  /// import 'package:hydrated_bloc/hydrated_bloc.dart';
+  /// import 'package:hydrated_riverpod/hydrated_riverpod.dart';
   /// import 'package:path_provider/path_provider.dart';
   ///
   /// void main() async {
@@ -62,10 +62,10 @@ class HydratedStorage implements Storage {
   ///       ? HydratedStorage.webStorageDirectory
   ///       : await getTemporaryDirectory(),
   ///   );
-  ///   HydratedBlocOverrides.runZoned(
-  ///     () => runApp(App()),
-  ///     storage: storage,
-  ///   );
+  ///
+  ///   HydratedRiverpod.initialize(storage: storage);
+  ///   runApp(App());
+  ///
   /// }
   /// ```
   ///
@@ -73,7 +73,7 @@ class HydratedStorage implements Storage {
   /// Following snippet shows how to make default one:
   /// ```dart
   /// import 'package:crypto/crypto.dart';
-  /// import 'package:hydrated_bloc/hydrated_bloc.dart';
+  /// import 'package:hydrated_riverpod/hydrated_riverpod.dart';
   ///
   /// const password = 'hydration';
   /// final byteskey = sha256.convert(utf8.encode(password)).bytes;

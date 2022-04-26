@@ -114,11 +114,13 @@ mixin HydratedMixin<State> on StateNotifier<State> {
   /// directly within the constructor body.
   ///
   /// ```dart
-  /// class CounterBloc extends Bloc<CounterEvent, int> with HydratedMixin {
-  ///  CounterBloc() : super(0) {
+  /// class Counter extends StateNotifier<int> with HydratedMixin {
+  ///  Counter() : super(0) {
   ///    hydrate();
   ///  }
   ///  ...
+  /// }
+  /// ```
   /// }
   /// ```
   void hydrate() {
@@ -306,13 +308,12 @@ mixin HydratedMixin<State> on StateNotifier<State> {
     _seen.removeLast();
   }
 
-  /// [id] is used to uniquely identify multiple instances
-  /// of the same [HydratedBloc] type.
+  /// [id] is used to uniquely identify multiple instances.
   /// In most cases it is not necessary;
-  /// however, if you wish to intentionally have multiple instances
-  /// of the same [HydratedBloc], then you must override [id]
-  /// and return a unique identifier for each [HydratedBloc] instance
-  /// in order to keep the caches independent of each other.
+  /// however, if you wish to intentionally have multiple instances,
+  /// then you must override [id] and return a unique identifier for
+  /// each [HydratedStateNotifier] instance in order to keep the caches
+  /// independent of each other.
   String get id => '';
 
   /// Storage prefix which can be overridden to provide a custom
@@ -327,16 +328,16 @@ mixin HydratedMixin<State> on StateNotifier<State> {
   @nonVirtual
   String get storageToken => '$storagePrefix$id';
 
-  /// [clear] is used to wipe or invalidate the cache of a [HydratedBloc].
-  /// Calling [clear] will delete the cached state of the bloc
-  /// but will not modify the current state of the bloc.
+  /// [clear] is used to wipe or invalidate the cache of a [HydratedStateNotifier].
+  /// Calling [clear] will delete the cached state of the state_notifier
+  /// but will not modify the current state of the state_notifier.
   Future<void> clear() => _storage.delete(storageToken);
 
   /// Responsible for converting the `Map<String, dynamic>` representation
-  /// of the bloc state into a concrete instance of the bloc state.
+  /// of the StateNotifier state into a concrete instance of the StateNotifier state.
   State? fromJson(Map<String, dynamic> json);
 
-  /// Responsible for converting a concrete instance of the bloc state
+  /// Responsible for converting a concrete instance of the StateNotifier state
   /// into the the `Map<String, dynamic>` representation.
   ///
   /// If [toJson] returns `null`, then no state changes will be persisted.
