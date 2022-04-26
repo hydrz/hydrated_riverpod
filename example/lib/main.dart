@@ -4,24 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hydrated_riverpod/hydrated_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
-void main() {
-  HydratedRiverpod.runZoned(
-    () => runApp(const ProviderScope(child: MyApp())),
-    createStorage: () async {
-      WidgetsFlutterBinding.ensureInitialized();
-      return HydratedStorage.build(
-          storageDirectory: kIsWeb
-              ? HydratedStorage.webStorageDirectory
-              : await getApplicationDocumentsDirectory());
-    },
-  );
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final storageDirectory = kIsWeb ? HydratedStorage.webStorageDirectory : await getApplicationDocumentsDirectory();
+  final storage = await HydratedStorage.build(storageDirectory: storageDirectory);
+  HydratedRiverpod.initialize(storage: storage);
+
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 final counterProvider = HydratedStateProvider((_) => 0, name: '_counter');
 
-final brightnessProvider =
-    StateNotifierProvider<BrightnessNotifier, Brightness>(
-        (_) => BrightnessNotifier());
+final brightnessProvider = StateNotifierProvider<BrightnessNotifier, Brightness>((_) => BrightnessNotifier());
 
 class MyApp extends ConsumerWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -71,8 +66,7 @@ class MyHomePage extends ConsumerWidget {
         children: <Widget>[
           FloatingActionButton(
             child: const Icon(Icons.brightness_6),
-            onPressed: () =>
-                ref.read(brightnessProvider.notifier).toggleBrightness(),
+            onPressed: () => ref.read(brightnessProvider.notifier).toggleBrightness(),
           ),
           const SizedBox(height: 4),
           FloatingActionButton(
@@ -92,7 +86,7 @@ class MyHomePage extends ConsumerWidget {
           FloatingActionButton(
             child: const Icon(Icons.delete_forever),
             onPressed: () {
-              HydratedRiverpod.current?.storage.clear();
+              HydratedRiverpod.instance?.storage.clear();
             },
           ),
         ],
@@ -110,7 +104,7 @@ class BrightnessNotifier extends HydratedStateNotifier<Brightness> {
 
   @override
   Brightness fromJson(Map<String, dynamic> json) {
-    return Brightness.values[json['brightness'] as int];
+    return json['brightness'] == null  ? Brightness.light : Brightness.values[json['brightness'] as int];
   }
 
   @override

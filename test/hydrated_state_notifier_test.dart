@@ -96,54 +96,55 @@ void main() {
     });
 
     test('reads from storage once upon initialization', () {
-      HydratedRiverpod.runZoned(() {
+      runZoned(() {
+        HydratedRiverpod.initialize(storage: storage);
         MyCallbackHydratedStateNotifier();
         verify<dynamic>(
           () => storage.read('MyCallbackHydratedStateNotifier'),
         ).called(1);
-      }, createStorage: () => storage);
+      });
     });
 
-    test(
-        'reads from storage once upon initialization w/custom storagePrefix/id',
-        () {
-      HydratedRiverpod.runZoned(() {
+    test('reads from storage once upon initialization w/custom storagePrefix/id', () {
+      runZoned(() {
+        HydratedRiverpod.initialize(storage: storage);
         const storagePrefix = '__storagePrefix__';
         const id = '__id__';
         MyHydratedStateNotifier(id, true, storagePrefix);
         verify<dynamic>(() => storage.read('$storagePrefix$id')).called(1);
-      }, createStorage: () => storage);
+      });
     });
 
-    test('writes to storage when onChange is called w/custom storagePrefix/id',
-        () {
-      HydratedRiverpod.runZoned(() {
+    test('writes to storage when onChange is called w/custom storagePrefix/id', () {
+      runZoned(() {
+        HydratedRiverpod.initialize(storage: storage);
         const expected = <String, int>{'value': 0};
         const storagePrefix = '__storagePrefix__';
         const id = '__id__';
         MyHydratedStateNotifier(id, true, storagePrefix).state = 0;
         verify(() => storage.write('$storagePrefix$id', expected)).called(2);
-      }, createStorage: () => storage);
+      });
     });
 
     test(
         'does not read from storage on subsequent state changes '
         'when cache value exists', () {
-      HydratedRiverpod.runZoned(() {
+      runZoned(() {
+        HydratedRiverpod.initialize(storage: storage);
         when<dynamic>(() => storage.read(any())).thenReturn({'value': 42});
         final stateNotifier = MyCallbackHydratedStateNotifier();
         expect(stateNotifier.state, 42);
         stateNotifier.increment();
         expect(stateNotifier.state, 43);
-        verify<dynamic>(() => storage.read('MyCallbackHydratedStateNotifier'))
-            .called(1);
-      }, createStorage: () => storage);
+        verify<dynamic>(() => storage.read('MyCallbackHydratedStateNotifier')).called(1);
+      });
     });
 
     test(
         'does not deserialize state on subsequent state changes '
         'when cache value exists', () {
-      HydratedRiverpod.runZoned(() {
+      runZoned(() {
+        HydratedRiverpod.initialize(storage: storage);
         final fromJsonCalls = <dynamic>[];
         when<dynamic>(() => storage.read(any())).thenReturn({'value': 42});
         final stateNotifier = MyCallbackHydratedStateNotifier(
@@ -155,25 +156,26 @@ void main() {
         expect(fromJsonCalls, [
           {'value': 42}
         ]);
-      }, createStorage: () => storage);
+      });
     });
 
     test(
         'does not read from storage on subsequent state changes '
         'when cache is empty', () {
-      HydratedRiverpod.runZoned(() {
+      runZoned(() {
+        HydratedRiverpod.initialize(storage: storage);
         when<dynamic>(() => storage.read(any())).thenReturn(null);
         final stateNotifier = MyCallbackHydratedStateNotifier();
         expect(stateNotifier.state, 0);
         stateNotifier.increment();
         expect(stateNotifier.state, 1);
-        verify<dynamic>(() => storage.read('MyCallbackHydratedStateNotifier'))
-            .called(1);
-      }, createStorage: () => storage);
+        verify<dynamic>(() => storage.read('MyCallbackHydratedStateNotifier')).called(1);
+      });
     });
 
     test('does not deserialize state when cache is empty', () {
-      HydratedRiverpod.runZoned(() {
+      runZoned(() {
+        HydratedRiverpod.initialize(storage: storage);
         final fromJsonCalls = <dynamic>[];
         when<dynamic>(() => storage.read(any())).thenReturn(null);
         final stateNotifier = MyCallbackHydratedStateNotifier(
@@ -183,51 +185,45 @@ void main() {
         stateNotifier.increment();
         expect(stateNotifier.state, 1);
         expect(fromJsonCalls, isEmpty);
-      }, createStorage: () => storage);
+      });
     });
 
     test(
         'does not read from storage on subsequent state changes '
         'when cache is malformed', () {
-      HydratedRiverpod.runZoned(() {
+      runZoned(() {
+        HydratedRiverpod.initialize(storage: storage);
         when<dynamic>(() => storage.read(any())).thenReturn('{');
         final stateNotifier = MyCallbackHydratedStateNotifier();
         expect(stateNotifier.state, 0);
         stateNotifier.increment();
         expect(stateNotifier.state, 1);
-        verify<dynamic>(() => storage.read('MyCallbackHydratedStateNotifier'))
-            .called(1);
-      }, createStorage: () => storage);
+        verify<dynamic>(() => storage.read('MyCallbackHydratedStateNotifier')).called(1);
+      });
     });
 
     test('does not deserialize state when cache is malformed', () {
-      HydratedRiverpod.runZoned(() {
+      runZoned(() {
+        HydratedRiverpod.initialize(storage: storage);
         final fromJsonCalls = <dynamic>[];
         runZonedGuarded(
           () {
             when<dynamic>(() => storage.read(any())).thenReturn('{');
-            MyCallbackHydratedStateNotifier(
-                onFromJsonCalled: fromJsonCalls.add);
+            MyCallbackHydratedStateNotifier(onFromJsonCalled: fromJsonCalls.add);
           },
           (_, __) {
             expect(fromJsonCalls, isEmpty);
           },
         );
-      }, createStorage: () => storage);
+      });
     });
 
     group('SingleHydratedNotifier', () {
-      test('should throw StorageNotFound when storage is null', () {
-        expect(
-          () => MyHydratedStateNotifier(),
-          throwsA(isA<StorageNotFound>()),
-        );
-      });
-
       test('should throw StorageNotFound when storage is default', () {
-        HydratedRiverpod.runZoned(() {
+        runZoned(() {
+          HydratedRiverpod.initialize();
           expect(
-            () => MyHydratedStateNotifier(),
+            MyHydratedStateNotifier.new,
             throwsA(isA<StorageNotFound>()),
           );
         });
@@ -238,48 +234,40 @@ void main() {
           // ignore: prefer_const_constructors
           StorageNotFound().toString(),
           'Storage was accessed before it was initialized.\n'
-          'Please ensure that storage has been initialized.\n'
-          '\n'
-          'For example:\n'
-          '\n'
-          'HydratedRiverpod.runZoned(\n'
-          '  () => runApp(MyApp()),\n'
-          '  createStorage: () => HydratedStorage.build(...),\n'
-          ');',
+          'Please ensure that storage has been initialized.',
         );
       });
 
       test('storage getter returns correct storage instance', () {
         final storage = MockStorage();
-        HydratedRiverpod.runZoned(() {
-          expect(HydratedRiverpod.current!.storage, equals(storage));
-        }, createStorage: () => storage);
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
+          expect(HydratedRiverpod.instance!.storage, equals(storage));
+        });
       });
 
       test('should call storage.write when onChange is called', () {
-        HydratedRiverpod.runZoned(() {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           final expected = <String, int>{'value': 0};
           MyHydratedStateNotifier().state = 0;
-          verify(() => storage.write('MyHydratedStateNotifier', expected))
-              .called(2);
-        }, createStorage: () => storage);
+          verify(() => storage.write('MyHydratedStateNotifier', expected)).called(2);
+        });
       });
 
-      test(
-          'should call storage.write when onChange is called with stateNotifier id',
-          () {
-        HydratedRiverpod.runZoned(() {
+      test('should call storage.write when onChange is called with stateNotifier id', () {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           final stateNotifier = MyHydratedStateNotifier('A');
           final expected = <String, int>{'value': 0};
           stateNotifier.state = 0;
-          verify(() => storage.write('MyHydratedStateNotifierA', expected))
-              .called(2);
-        }, createStorage: () => storage);
+          verify(() => storage.write('MyHydratedStateNotifierA', expected)).called(2);
+        });
       });
 
-      test('should throw BlocUnhandledErrorException when storage.write throws',
-          () {
-        HydratedRiverpod.runZoned(() {
+      test('should throw UnhandledErrorException when storage.write throws', () {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           runZonedGuarded(
             () async {
               final expectedError = Exception('oops');
@@ -295,56 +283,60 @@ void main() {
               expect(error.toString(), 'Exception: oops');
             },
           );
-        }, createStorage: () => storage);
+        });
       });
 
       test('stores initial state when instantiated', () {
-        HydratedRiverpod.runZoned(() {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           MyHydratedStateNotifier();
           verify(
             () => storage.write('MyHydratedStateNotifier', {'value': 0}),
           ).called(1);
-        }, createStorage: () => storage);
+        });
       });
 
       test('initial state should return 0 when fromJson returns null', () {
-        HydratedRiverpod.runZoned(() {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           when<dynamic>(() => storage.read(any())).thenReturn(null);
           expect(MyHydratedStateNotifier().state, 0);
-          verify<dynamic>(() => storage.read('MyHydratedStateNotifier'))
-              .called(1);
-        }, createStorage: () => storage);
+          verify<dynamic>(() => storage.read('MyHydratedStateNotifier')).called(1);
+        });
       });
 
       test('initial state should return 0 when deserialization fails', () {
-        HydratedRiverpod.runZoned(() {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           when<dynamic>(() => storage.read(any())).thenThrow(Exception('oops'));
           expect(MyHydratedStateNotifier('', false).state, 0);
-        }, createStorage: () => storage);
+        });
       });
 
       test('initial state should return 101 when fromJson returns 101', () {
-        HydratedRiverpod.runZoned(() {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           when<dynamic>(() => storage.read(any())).thenReturn({'value': 101});
           expect(MyHydratedStateNotifier().state, 101);
-          verify<dynamic>(() => storage.read('MyHydratedStateNotifier'))
-              .called(1);
-        }, createStorage: () => storage);
+          verify<dynamic>(() => storage.read('MyHydratedStateNotifier')).called(1);
+        });
       });
 
       group('clear', () {
         test('calls delete on storage', () async {
-          await HydratedRiverpod.runZoned(() async {
+          await runZoned(() async {
+            HydratedRiverpod.initialize(storage: storage);
             await MyHydratedStateNotifier().clear();
             verify(() => storage.delete('MyHydratedStateNotifier')).called(1);
-          }, createStorage: () => storage);
+          });
         });
       });
     });
 
     group('MultiHydratedNotifier', () {
       test('initial state should return 0 when fromJson returns null', () {
-        HydratedRiverpod.runZoned(() {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           when<dynamic>(() => storage.read(any())).thenReturn(null);
           expect(MyMultiHydratedStateNotifier('A').state, 0);
           verify<dynamic>(
@@ -355,12 +347,12 @@ void main() {
           verify<dynamic>(
             () => storage.read('MyMultiHydratedStateNotifierB'),
           ).called(1);
-        }, createStorage: () => storage);
+        });
       });
 
-      test('initial state should return 101/102 when fromJson returns 101/102',
-          () {
-        HydratedRiverpod.runZoned(() {
+      test('initial state should return 101/102 when fromJson returns 101/102', () {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           when<dynamic>(
             () => storage.read('MyMultiHydratedStateNotifierA'),
           ).thenReturn({'value': 101});
@@ -376,37 +368,38 @@ void main() {
           verify<dynamic>(
             () => storage.read('MyMultiHydratedStateNotifierB'),
           ).called(1);
-        }, createStorage: () => storage);
+        });
       });
 
       group('clear', () {
         test('calls delete on storage', () async {
-          await HydratedRiverpod.runZoned(() async {
+          await runZoned(() async {
+            HydratedRiverpod.initialize(storage: storage);
             await MyMultiHydratedStateNotifier('A').clear();
-            verify(() => storage.delete('MyMultiHydratedStateNotifierA'))
-                .called(1);
+            verify(() => storage.delete('MyMultiHydratedStateNotifierA')).called(1);
             verifyNever(() => storage.delete('MyMultiHydratedStateNotifierB'));
 
             await MyMultiHydratedStateNotifier('B').clear();
-            verify(() => storage.delete('MyMultiHydratedStateNotifierB'))
-                .called(1);
-          }, createStorage: () => storage);
+            verify(() => storage.delete('MyMultiHydratedStateNotifierB')).called(1);
+          });
         });
       });
     });
 
     group('MyUuidHydratedStateNotifier', () {
       test('stores initial state when instantiated', () {
-        HydratedRiverpod.runZoned(() {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           MyUuidHydratedStateNotifier();
           verify(
             () => storage.write('MyUuidHydratedStateNotifier', any<dynamic>()),
           ).called(1);
-        }, createStorage: () => storage);
+        });
       });
 
       test('correctly caches computed initial state', () {
-        HydratedRiverpod.runZoned(() {
+        runZoned(() {
+          HydratedRiverpod.initialize(storage: storage);
           dynamic cachedState;
           when<dynamic>(() => storage.read(any())).thenReturn(cachedState);
           when(
@@ -414,20 +407,18 @@ void main() {
           ).thenAnswer((_) => Future<void>.value());
           MyUuidHydratedStateNotifier();
           final captured = verify(
-            () => storage.write(
-                'MyUuidHydratedStateNotifier', captureAny<dynamic>()),
+            () => storage.write('MyUuidHydratedStateNotifier', captureAny<dynamic>()),
           ).captured;
           cachedState = captured.first;
           when<dynamic>(() => storage.read(any())).thenReturn(cachedState);
           MyUuidHydratedStateNotifier();
           final secondCaptured = verify(
-            () => storage.write(
-                'MyUuidHydratedStateNotifier', captureAny<dynamic>()),
+            () => storage.write('MyUuidHydratedStateNotifier', captureAny<dynamic>()),
           ).captured;
           final dynamic initialStateB = secondCaptured.first;
 
           expect(initialStateB, cachedState);
-        }, createStorage: () => storage);
+        });
       });
     });
   });

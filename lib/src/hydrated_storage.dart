@@ -142,14 +142,14 @@ class HydratedStorage implements Storage {
   @override
   Future<void> write(String key, dynamic value) async {
     if (_box.isOpen) {
-      return _lock.synchronized(() => _box.put(key, value));
+      await _lock.synchronized(() => _box.put(key, value));
     }
   }
 
   @override
   Future<void> delete(String key) async {
     if (_box.isOpen) {
-      return _lock.synchronized(() => _box.delete(key));
+      await _lock.synchronized(() => _box.delete(key));
     }
   }
 
@@ -157,7 +157,7 @@ class HydratedStorage implements Storage {
   Future<void> clear() async {
     if (_box.isOpen) {
       _instance = null;
-      return _lock.synchronized(_box.clear);
+      await _lock.synchronized(_box.clear);
     }
   }
 }

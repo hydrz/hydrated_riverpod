@@ -15,10 +15,9 @@ class MockBox extends Mock implements Box<dynamic> {}
 void main() {
   group('DefaultStorage', () {
     test('throws NoSuchMethodError', () {
-      HydratedRiverpod.runZoned(() {
-        final scope = HydratedRiverpod.current!;
-        expect(() => scope.storage.read(''), throwsNoSuchMethodError);
-      });
+      HydratedRiverpod.initialize();
+      final scope = HydratedRiverpod.instance!;
+      expect(() => scope.storage.read(''), throwsNoSuchMethodError);
     });
   });
 
@@ -37,8 +36,7 @@ void main() {
 
     group('migration', () {
       test('returns correct value when file exists', () async {
-        File('${storageDirectory.path}/.hydrated_riverpod.json')
-            .writeAsStringSync(json.encode({
+        File('${storageDirectory.path}/.hydrated_riverpod.json').writeAsStringSync(json.encode({
           'Counter': json.encode({'value': 4})
         }));
         storage = await HydratedStorage.build(
@@ -50,8 +48,7 @@ void main() {
 
     group('build', () {
       setUp(() async {
-        await (await HydratedStorage.build(storageDirectory: storageDirectory))
-            .clear();
+        await (await HydratedStorage.build(storageDirectory: storageDirectory)).clear();
       });
 
       test('reuses existing instance when called multiple times', () async {
@@ -86,8 +83,7 @@ void main() {
         );
         final box = HydratedStorage.hive.box<dynamic>('hydrated_riverpod_box');
         expect(box, isNotNull);
-        expect(box.path,
-            p.join(storageDirectory.path, 'hydrated_riverpod_box.hive'));
+        expect(box.path, p.join(storageDirectory.path, 'hydrated_riverpod_box.hive'));
       });
     });
 

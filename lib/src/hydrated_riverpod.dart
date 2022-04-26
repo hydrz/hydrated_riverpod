@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:hydrated_riverpod/hydrated_riverpod.dart';
 import 'package:meta/meta.dart';
 
-const _asyncRunZoned = runZoned;
-
 /// For example:
 ///
 /// ```dart
@@ -15,68 +13,37 @@ const _asyncRunZoned = runZoned;
 /// }
 ///
 /// void main() {
-///   HydratedRiverpod.runZoned(() {
+///   HydratedRiverpod.initialize(storage: MyStorage());
 ///     ...
 ///     // HydratedRiverpod instances will use MyStorage.
 ///     ...
-///   }, storage: MyStorage());
 /// }
 /// ```
 class HydratedRiverpod {
-  static final _token = Object();
+  HydratedRiverpod._({
+    required Storage storage,
+  }) : _storage = storage;
 
-  /// Returns the current [HydratedRiverpod] instance.
-  ///
-  /// This will return `null` if the current [Zone] does not contain
-  /// any [HydratedRiverpod].
-  ///
-  /// See also:
-  /// * [HydratedRiverpod.runZoned] to provide [HydratedRiverpod]
-  /// in a fresh [Zone].
-  ///
-  static HydratedRiverpod? get current {
-    return Zone.current[_token] as HydratedRiverpod?;
-  }
+  final Storage _storage;
 
-  /// Runs [body] in a fresh [Zone] using the provided overrides.
-  static FutureOr<R> runZoned<R>(
-    FutureOr<R> Function() body, {
-    FutureOr<Storage> Function()? createStorage,
+  /// Initializes [HydratedRiverpod] with [storage].
+  Storage get storage => _storage;
+
+  /// The current [HydratedRiverpod], if one has been created.
+  static HydratedRiverpod? get instance => _instance;
+  static HydratedRiverpod? _instance;
+
+  /// Returns an instance of the [HydratedRiverpod], creating and
+  /// initializing it if necessary.
+  // ignore: prefer_constructors_over_static_methods
+  static HydratedRiverpod initialize({
+    Storage? storage,
   }) {
-    final _scope = _HydratedRiverpodScope(createStorage);
-    return _asyncRunZoned(
-      () async {
-        await _scope._init();
-        return body();
-      },
-      zoneValues: {_token: _scope},
-    );
-  }
+    storage ??= _defaultStorage;
 
-  /// The [Storage] that will be used within the current [Zone].
-  Storage get storage => _defaultStorage;
-}
+    _instance = HydratedRiverpod._(storage: storage);
 
-class _HydratedRiverpodScope extends HydratedRiverpod {
-  _HydratedRiverpodScope(this.createStorage);
-
-  final HydratedRiverpod? _previous = HydratedRiverpod.current;
-  final FutureOr<Storage> Function()? createStorage;
-  late final Storage? _storageValue;
-
-  Future<void> _init() async {
-    _storageValue = await createStorage?.call();
-  }
-
-  @override
-  Storage get storage {
-    final storage = _storageValue;
-    if (storage != null) return storage;
-
-    final previous = _previous;
-    if (previous != null) return previous.storage;
-
-    return super.storage;
+    return HydratedRiverpod.instance!;
   }
 }
 
@@ -102,8 +69,7 @@ class _HydratedRiverpodScope extends HydratedRiverpod {
 /// ```
 ///
 /// {@endtemplate}
-abstract class HydratedStateNotifier<State> extends StateNotifier<State>
-    with HydratedMixin<State> {
+abstract class HydratedStateNotifier<State> extends StateNotifier<State> with HydratedMixin<State> {
   /// {@macro HydratedStateNotifier}
   HydratedStateNotifier(State state) : super(state) {
     hydrate();
@@ -134,7 +100,7 @@ abstract class HydratedStateNotifier<State> extends StateNotifier<State>
 /// * [HydratedStateNotifier] to enable automatic state persistence/restoration with [StateNotifier]
 ///
 mixin HydratedMixin<State> on StateNotifier<State> {
-  late final _scope = HydratedRiverpod.current;
+  late final _scope = HydratedRiverpod.instance;
 
   Storage get _storage {
     final storage = _scope?.storage;
@@ -296,9 +262,7 @@ mixin HydratedMixin<State> on StateNotifier<State> {
       List<dynamic>? list;
       for (var i = 0; i < object.length; i++) {
         final traversed = _traverseWrite(object[i]);
-        list ??= traversed.outcome == _Outcome.atomic
-            ? object.sublist(0)
-            : (<dynamic>[]..length = object.length);
+        list ??= traversed.outcome == _Outcome.atomic ? object.sublist(0) : (<dynamic>[]..length = object.length);
         list[i] = traversed.value;
       }
       _removeSeen(object);
@@ -320,9 +284,7 @@ mixin HydratedMixin<State> on StateNotifier<State> {
 
   dynamic _traverseJson(dynamic object) {
     final dynamic traversedAtomicJson = _traverseAtomicJson(object);
-    return traversedAtomicJson is! NIL
-        ? traversedAtomicJson
-        : _traverseComplexJson(object);
+    return traversedAtomicJson is! NIL ? traversedAtomicJson : _traverseComplexJson(object);
   }
 
   dynamic _toEncodable(dynamic object) => object.toJson();
@@ -394,15 +356,6 @@ class HydratedCyclicError extends HydratedUnsupportedError {
 /// {@template storage_not_found}
 /// Exception thrown if there was no [HydratedStorage] specified.
 /// This is most likely due to forgetting to setup the [HydratedStorage]:
-///
-/// ```dart
-/// void main() async {
-///   WidgetsFlutterBinding.ensureInitialized();
-///   HydratedCubit.storage = await HydratedStorage.build();
-///   runApp(MyApp());
-/// }
-/// ```
-///
 /// {@endtemplate}
 class StorageNotFound implements Exception {
   /// {@macro storage_not_found}
@@ -411,12 +364,7 @@ class StorageNotFound implements Exception {
   @override
   String toString() {
     return 'Storage was accessed before it was initialized.\n'
-        'Please ensure that storage has been initialized.\n\n'
-        'For example:\n\n'
-        'HydratedRiverpod.runZoned(\n'
-        '  () => runApp(MyApp()),\n'
-        '  createStorage: () => HydratedStorage.build(...),\n'
-        ');';
+        'Please ensure that storage has been initialized.';
   }
 }
 
@@ -466,19 +414,15 @@ enum _Outcome { atomic, complex }
 
 class _Traversed {
   _Traversed._({required this.outcome, required this.value});
-  _Traversed.atomic(dynamic value)
-      : this._(outcome: _Outcome.atomic, value: value);
-  _Traversed.complex(dynamic value)
-      : this._(outcome: _Outcome.complex, value: value);
+  _Traversed.atomic(dynamic value) : this._(outcome: _Outcome.atomic, value: value);
+  _Traversed.complex(dynamic value) : this._(outcome: _Outcome.complex, value: value);
   final _Outcome outcome;
   final dynamic value;
 }
 
-late final _defaultStorage = _DefaultStorage();
+final _defaultStorage = _DefaultStorage();
 
 class _DefaultStorage implements Storage {
   @override
-  dynamic noSuchMethod(Invocation invocation) {
-    return super.noSuchMethod(invocation);
-  }
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
