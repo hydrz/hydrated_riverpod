@@ -1,3 +1,5 @@
+// ignore_for_file: lines_longer_than_80_chars
+
 import 'dart:async';
 
 import 'package:hydrated_riverpod/hydrated_riverpod.dart';
@@ -69,7 +71,8 @@ class HydratedRiverpod {
 /// ```
 ///
 /// {@endtemplate}
-abstract class HydratedStateNotifier<State> extends StateNotifier<State> with HydratedMixin<State> {
+abstract class HydratedStateNotifier<State> extends StateNotifier<State>
+    with HydratedMixin<State> {
   /// {@macro HydratedStateNotifier}
   HydratedStateNotifier(State state) : super(state) {
     hydrate();
@@ -264,7 +267,9 @@ mixin HydratedMixin<State> on StateNotifier<State> {
       List<dynamic>? list;
       for (var i = 0; i < object.length; i++) {
         final traversed = _traverseWrite(object[i]);
-        list ??= traversed.outcome == _Outcome.atomic ? object.sublist(0) : (<dynamic>[]..length = object.length);
+        list ??= traversed.outcome == _Outcome.atomic
+            ? object.sublist(0)
+            : (<dynamic>[]..length = object.length);
         list[i] = traversed.value;
       }
       _removeSeen(object);
@@ -286,7 +291,9 @@ mixin HydratedMixin<State> on StateNotifier<State> {
 
   dynamic _traverseJson(dynamic object) {
     final dynamic traversedAtomicJson = _traverseAtomicJson(object);
-    return traversedAtomicJson is! NIL ? traversedAtomicJson : _traverseComplexJson(object);
+    return traversedAtomicJson is! NIL
+        ? traversedAtomicJson
+        : _traverseComplexJson(object);
   }
 
   dynamic _toEncodable(dynamic object) => object.toJson();
@@ -415,8 +422,10 @@ enum _Outcome { atomic, complex }
 
 class _Traversed {
   _Traversed._({required this.outcome, required this.value});
-  _Traversed.atomic(dynamic value) : this._(outcome: _Outcome.atomic, value: value);
-  _Traversed.complex(dynamic value) : this._(outcome: _Outcome.complex, value: value);
+  _Traversed.atomic(dynamic value)
+      : this._(outcome: _Outcome.atomic, value: value);
+  _Traversed.complex(dynamic value)
+      : this._(outcome: _Outcome.complex, value: value);
   final _Outcome outcome;
   final dynamic value;
 }

@@ -16,7 +16,7 @@ dependencies:
   hive: ^2.1.0
   json_serializable: ^6.1.6
   meta: ^1.7.0
-  riverpod: ^1.0.3
+  riverpod: ^2.0.0-dev.9
   synchronized: ^3.0.0+2
 
 dev_dependencies:
