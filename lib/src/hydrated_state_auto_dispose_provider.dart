@@ -12,12 +12,16 @@ class HydratedAutoDisposeStateProvider<State>
     List<ProviderOrFamily>? dependencies,
     Family? from,
     Object? argument,
+    Duration? cacheTime,
+    Duration? disposeDelay,
   })  : notifier = _HydratedAutoDisposeNotifierProvider(
           create,
           name: name,
           dependencies: dependencies,
           from: from,
           argument: argument,
+          cacheTime: cacheTime,
+          disposeDelay: disposeDelay,
         ),
         super(create, name: name, from: from, argument: argument);
 
@@ -62,7 +66,15 @@ class _HydratedAutoDisposeNotifierProvider<State>
     required this.dependencies,
     required Family? from,
     required Object? argument,
-  }) : super(name: name, from: from, argument: argument);
+    required Duration? cacheTime,
+    required Duration? disposeDelay,
+  }) : super(
+          name: name,
+          from: from,
+          argument: argument,
+          cacheTime: cacheTime,
+          disposeDelay: disposeDelay,
+        );
 
   final Create<State, AutoDisposeStateProviderRef<State>> _create;
 
@@ -139,7 +151,15 @@ class HydratedAutoDisposeStateProviderFamily<State, Arg>
     this._create, {
     String? name,
     List<ProviderOrFamily>? dependencies,
-  }) : super(_create, name: name, dependencies: dependencies);
+    Duration? cacheTime,
+    Duration? disposeDelay,
+  }) : super(
+          _create,
+          name: name,
+          dependencies: dependencies,
+          cacheTime: cacheTime,
+          disposeDelay: disposeDelay,
+        );
 
   final FamilyCreate<State, AutoDisposeStateProviderRef<State>, Arg> _create;
 
@@ -187,11 +207,15 @@ class HydratedAutoDisposeStateProviderFamilyBuilder
     FamilyCreate<State, AutoDisposeStateProviderRef<State>, Arg> create, {
     String? name,
     List<ProviderOrFamily>? dependencies,
+    Duration? cacheTime,
+    Duration? disposeDelay,
   }) {
     return HydratedAutoDisposeStateProviderFamily(
       create,
       name: name,
       dependencies: dependencies,
+      cacheTime: cacheTime,
+      disposeDelay: disposeDelay,
     );
   }
 }

@@ -1,9 +1,10 @@
+// ignore_for_file: lines_longer_than_80_chars
+
 import 'package:hydrated_riverpod/hydrated_riverpod.dart';
 import 'package:meta/meta.dart';
 // ignore: implementation_imports
 import 'package:riverpod/src/builders.dart';
 // ignore: implementation_imports
-import 'package:riverpod/src/framework.dart';
 
 part 'hydrated_state_auto_dispose_provider.dart';
 
@@ -322,11 +323,15 @@ class HydratedAutoDisposeStateProviderBuilder
     Create<State, AutoDisposeStateProviderRef<State>> create, {
     String? name,
     List<ProviderOrFamily>? dependencies,
+    Duration? cacheTime,
+    Duration? disposeDelay,
   }) {
     return HydratedAutoDisposeStateProvider(
       create,
       name: name,
       dependencies: dependencies,
+      cacheTime: cacheTime,
+      disposeDelay: disposeDelay,
     );
   }
 

@@ -7,8 +7,11 @@ import 'package:path_provider/path_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final storageDirectory = kIsWeb ? HydratedStorage.webStorageDirectory : await getApplicationDocumentsDirectory();
-  final storage = await HydratedStorage.build(storageDirectory: storageDirectory);
+  final storageDirectory = kIsWeb
+      ? HydratedStorage.webStorageDirectory
+      : await getApplicationDocumentsDirectory();
+  final storage =
+      await HydratedStorage.build(storageDirectory: storageDirectory);
   HydratedRiverpod.initialize(storage: storage);
 
   runApp(const ProviderScope(child: MyApp()));
@@ -16,7 +19,9 @@ void main() async {
 
 final counterProvider = HydratedStateProvider((_) => 0, name: '_counter');
 
-final brightnessProvider = StateNotifierProvider<BrightnessNotifier, Brightness>((_) => BrightnessNotifier());
+final brightnessProvider =
+    StateNotifierProvider<BrightnessNotifier, Brightness>(
+        (_) => BrightnessNotifier());
 
 class MyApp extends ConsumerWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -66,7 +71,8 @@ class MyHomePage extends ConsumerWidget {
         children: <Widget>[
           FloatingActionButton(
             child: const Icon(Icons.brightness_6),
-            onPressed: () => ref.read(brightnessProvider.notifier).toggleBrightness(),
+            onPressed: () =>
+                ref.read(brightnessProvider.notifier).toggleBrightness(),
           ),
           const SizedBox(height: 4),
           FloatingActionButton(
@@ -104,7 +110,9 @@ class BrightnessNotifier extends HydratedStateNotifier<Brightness> {
 
   @override
   Brightness fromJson(Map<String, dynamic> json) {
-    return json['brightness'] == null  ? Brightness.light : Brightness.values[json['brightness'] as int];
+    return json['brightness'] == null
+        ? Brightness.light
+        : Brightness.values[json['brightness'] as int];
   }
 
   @override
